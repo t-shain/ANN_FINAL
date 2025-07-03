@@ -4,7 +4,8 @@ ORIGINAL_DATASET_DIR = "/Users/shir/Desktop/ANN_FINAL/dataset"
 SPLIT_DATASET_DIR = "/Users/shir/Desktop/ANN_FINAL/split_dataset"
 TRAIN_DIR = os.path.join(SPLIT_DATASET_DIR, "train")
 TEST_DIR = os.path.join(SPLIT_DATASET_DIR, "test")
-MODEL_SAVE_PATH = "/Users/shir/Desktop/ANN_FINAL/vgg16_model.h5"
+MODEL_SAVE_PATH = "/Users/shir/Desktop/ANN_FINAL/models/vgg16_model.h5"
+FINETUNED_MODEL_SAVE_PATH = "/Users/shir/Desktop/ANN_FINAL/models/vgg16_finetuned_model.h5"
 
 SPLIT_RATIO = 0.8
 SEED = 42

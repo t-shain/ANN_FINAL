@@ -1,5 +1,6 @@
 import os
 
+#TODO: Change to relative paths
 ORIGINAL_DATASET_DIR = "/Users/shir/Desktop/ANN_FINAL/dataset"
 SPLIT_DATASET_DIR = "/Users/shir/Desktop/ANN_FINAL/split_dataset"
 TRAIN_DIR = os.path.join(SPLIT_DATASET_DIR, "train")

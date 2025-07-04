@@ -9,7 +9,8 @@ train_ds = tf.keras.preprocessing.image_dataset_from_directory(
     TRAIN_DIR,
     seed=SEED,
     image_size=(IMG_HEIGHT, IMG_WIDTH),
-    batch_size=BATCH_SIZE
+    batch_size=BATCH_SIZE,
+    shuffle=False
 )
 
 class_names = train_ds.class_names

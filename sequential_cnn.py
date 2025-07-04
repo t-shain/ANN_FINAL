@@ -2,12 +2,11 @@ import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import numpy as np
-import keras
+
 from keras.applications.densenet import preprocess_input, decode_predictions
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.preprocessing import image_dataset_from_directory
 from tensorflow.keras.optimizers import Adam
 from sklearn.model_selection import train_test_split
 

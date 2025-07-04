@@ -7,7 +7,8 @@ test_ds = tf.keras.preprocessing.image_dataset_from_directory(
     TEST_DIR,
     seed=SEED,
     image_size=(IMG_HEIGHT, IMG_WIDTH),
-    batch_size=BATCH_SIZE
+    batch_size=BATCH_SIZE, 
+    shuffle=False  
 )
 
 loaded_model = tf.keras.models.load_model(FINETUNED_MODEL_SAVE_PATH)

@@ -50,15 +50,62 @@ test_datagen = ImageDataGenerator(rescale=1./255)
 test_generator = test_datagen.flow_from_directory(
     train_data_dir,
     target_size=IMAGE_SIZE,
-    batch_size=10,            
+    batch_size=1,            
     class_mode='categorical',  # same as training
     shuffle=False  
-    subset='testing'# important for consistent evaluation
+    subset='testing'
 )
 
 # Get the number of classes from the generator
 NUM_CLASSES = len(train_generator.class_indices)
 print(f"Found {NUM_CLASSES} classes: {train_generator.class_indices}")
+
+## generate X,y training and testing data from the generators
+def generator_to_train_test_arrays(generator, test_size=0.2, random_state=None):
+    """
+    Convert a directory flow generator into separate train/test arrays.
+    
+    Args:
+        generator: A generator created with flow_from_directory
+        test_size: Proportion of data to use for testing (default: 0.2)
+        random_state: Random seed for reproducibility
+        
+    Returns:
+        X_train, X_test, y_train, y_test: Arrays containing the split data
+    """
+    # Get all data from the generator
+    X = []
+    y = []
+    
+    # Calculate number of batches needed to get all data
+    num_batches = int(np.ceil(generator.samples / generator.batch_size))
+    
+    for i in range(num_batches):
+        batch_X, batch_y = next(generator)
+        X.append(batch_X)
+        y.append(batch_y)
+        
+        # Reset generator if we've reached the end
+        if (i + 1) * generator.batch_size >= generator.samples:
+            generator.reset()
+    
+    # Concatenate all batches
+    X = np.concatenate(X)
+    y = np.concatenate(y)
+    
+    # Split into train and test
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, 
+        test_size=test_size, 
+        random_state=random_state,
+        stratify=y  # Preserve class distribution
+    )
+    
+    return X_train, X_test, y_train, y_test
+
+X_train, X_test, y_train, y_test = generator_to_train_test_arrays(train_generator)
+
+
 
 # Build a simple CNN model
 model = Sequential([
@@ -84,18 +131,20 @@ model.compile(
     metrics=['accuracy']
 )
 
-# Train the model
-history = model.fit(
-    train_generator,
-    steps_per_epoch=train_generator.samples // BATCH_SIZE,
+# train the model
+history = model.fit(x=X_train,
+    y=y_train,
+    batch_size=BATCH_SIZE,
     epochs=EPOCHS,
-)
+    validation_data=None,
+    shuffle=True,
+    steps_per_epoch= len(X_train) // BATCH_SIZE,)
 
 # Save the model
 model.save('garbage-classifier-custom.h5')
 
 # Option 1: Simple evaluation
-results = model.evaluate(test_generator)
+results = model.evaluate(X_test, y_test, batch_size=64)
 print(f"Evaluation results - Loss: {results[0]:.4f}, Accuracy: {results[1]:.2%}")
 
 import numpy as np
@@ -104,35 +153,22 @@ from sklearn.metrics import confusion_matrix
 import seaborn as sns
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
-# Assuming you have a trained model and generators set up
-# train_generator and validation_generator created with flow_from_directory()
+model = load_model('garbage-classifier-custom.h5')
+# 1. Get predictions (use X_test if you want validation performance)
 
-def plot_confusion_matrix(generator, model):
-    # Reset generator to ensure we start from the beginning
-    generator.reset()
-    
-    # Get all predictions
-    predictions = model.predict(generator, steps=len(generator), verbose=1)
-    predicted_classes = np.argmax(predictions, axis=1)
-    
-    # Get true classes
-    true_classes = generator.classes
-    class_labels = list(generator.class_indices.keys())
-    
-    # Compute confusion matrix
-    cm = confusion_matrix(true_classes, predicted_classes)
-    
-    # Plot
-    plt.figure(figsize=(10, 8))
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
-                xticklabels=class_labels, 
-                yticklabels=class_labels)
-    plt.ylabel('True Label')
-    plt.xlabel('Predicted Label')
-    plt.title('Confusion Matrix')
-    plt.show()
-    
-    return cm
+y_pred = model.predict(X_test)
+y_pred_classes = np.argmax(y_pred, axis=1)  # Convert probabilities to class labels
+y_true = np.argmax(y_test, axis=1)  # If y_train is one-hot encoded
 
-# Usage example:
-cm = plot_confusion_matrix(train_generator, model)
+# 2. Compute confusion matrix
+cm = confusion_matrix(y_true, y_pred_classes)
+
+# 3. Plot with Seaborn
+plt.figure(figsize=(10, 8))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+            xticklabels=train_generator.class_indices.keys(), 
+            yticklabels=train_generator.class_indices.keys())
+plt.xlabel('Predicted Labels')
+plt.ylabel('True Labels')
+plt.title('Confusion Matrix (Training Data)')
+plt.show()
